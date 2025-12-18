@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travis Scott - Circus Maximus World Tour</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #000;
+            color: #fff;
+            font-family: 'Space Mono', monospace;
+            overflow: hidden;
+            min-height: 100vh;
+        }
+        
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 30px 40px;
+            z-index: 100;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%);
+        }
+        
+        .header h1 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(2rem, 5vw, 4rem);
+            letter-spacing: 0.3em;
+            color: #ff4500;
+            text-shadow: 0 0 30px rgba(255, 69, 0, 0.5);
+            margin-bottom: 5px;
+        }
+        
+        .header .subtitle {
+            font-size: 0.75rem;
+            letter-spacing: 0.4em;
+            color: rgba(255,255,255,0.6);
+            text-transform: uppercase;
+        }
+        
+        .stats-panel {
+            position: fixed;
+            bottom: 30px;
+            left: 40px;
+            z-index: 100;
+            display: flex;
+            gap: 40px;
+        }
+        
+        .stat {
+            text-align: left;
+        }
+        
+        .stat-value {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2.5rem;
+            color: #ff4500;
+            line-height: 1;
+        }
+        
+        .stat-label {
+            font-size: 0.65rem;
+            letter-spacing: 0.2em;
+            color: rgba(255,255,255,0.5);
+            text-transform: uppercase;
+            margin-top: 5px;
+        }
+        
+        .venue-info {
+            position: fixed;
+            bottom: 30px;
+            right: 40px;
+            z-index: 100;
+            text-align: right;
+            max-width: 350px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        .venue-info.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .venue-city {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2rem;
+            color: #fff;
+            letter-spacing: 0.1em;
+        }
+        
+        .venue-details {
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.6);
+            margin-top: 8px;
+            line-height: 1.6;
+        }
+        
+        .venue-date {
+            color: #ff4500;
+            font-weight: 700;
+        }
+        
+        .tour-timeline {
+            position: fixed;
+            left: 40px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        
+        .timeline-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .timeline-dot:hover {
+            background: rgba(255,255,255,0.5);
+            transform: scale(1.5);
+        }
+        
+        .timeline-dot.active {
+            background: #ff4500;
+            box-shadow: 0 0 15px rgba(255, 69, 0, 0.8);
+        }
+        
+        .timeline-dot.visited {
+            background: rgba(255, 69, 0, 0.4);
+        }
+        
+        .controls {
+            position: fixed;
+            top: 50%;
+            right: 40px;
+            transform: translateY(-50%);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .control-btn {
+            width: 50px;
+            height: 50px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(0,0,0,0.5);
+            color: #fff;
+            font-family: 'Space Mono', monospace;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .control-btn:hover {
+            border-color: #ff4500;
+            background: rgba(255, 69, 0, 0.1);
+        }
+        
+        .control-btn.active {
+            background: #ff4500;
+            border-color: #ff4500;
+        }
+        
+        .legend {
+            position: fixed;
+            top: 130px;
+            right: 40px;
+            z-index: 100;
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+            color: rgba(255,255,255,0.6);
+        }
+        
+        .legend-color {
+            width: 12px;
+            height: 3px;
+        }
+        
+        .noise-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+        
+        .glow-ring {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 69, 0, 0.1);
+            pointer-events: none;
+            z-index: 0;
+            animation: pulse-ring 4s ease-in-out infinite;
+        }
+        
+        .glow-ring:nth-child(2) {
+            width: 700px;
+            height: 700px;
+            animation-delay: -1s;
+        }
+        
+        .glow-ring:nth-child(3) {
+            width: 800px;
+            height: 800px;
+            animation-delay: -2s;
+        }
+        
+        @keyframes pulse-ring {
+            0%, 100% {
+                opacity: 0.3;
+                transform: translate(-50%, -50%) scale(1);
+            }
+            50% {
+                opacity: 0.1;
+                transform: translate(-50%, -50%) scale(1.05);
+            }
+        }
+        
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            transition: opacity 0.5s ease;
+        }
+        
+        .loading.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .loading-text {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.5rem;
+            letter-spacing: 0.5em;
+            color: #ff4500;
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading" id="loading">
+        <div class="loading-text">LOADING TOUR DATA...</div>
+    </div>
+    
+    <div class="glow-ring"></div>
+    <div class="glow-ring"></div>
+    <div class="glow-ring"></div>
+    
+    <div class="noise-overlay"></div>
+    
+    <div id="canvas-container"></div>
+    
+    <div class="header">
+        <h1>CIRCUS MAXIMUS</h1>
+        <div class="subtitle">Travis Scott World Tour 2023-2025</div>
+    </div>
+    
+    <div class="stats-panel">
+        <div class="stat">
+            <div class="stat-value">85</div>
+            <div class="stat-label">Total Shows</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value">$265M</div>
+            <div class="stat-label">Revenue</div>
+        </div>
+        <div class="stat">
+            <div class="stat-value">6</div>
+            <div class="stat-label">Continents</div>
+        </div>
+    </div>
+    
+    <div class="venue-info" id="venue-info">
+        <div class="venue-city" id="venue-city"></div>
+        <div class="venue-details" id="venue-details"></div>
+    </div>
+    
+    <div class="tour-timeline" id="timeline"></div>
+    
+    <div class="controls">
+        <button class="control-btn" id="play-btn" title="Play/Pause">▶</button>
+        <button class="control-btn" id="reset-btn" title="Reset">↺</button>
+        <button class="control-btn" id="auto-rotate" title="Auto Rotate">◎</button>
+    </div>
+    
+    <div class="legend">
+        <div class="legend-item">
+            <div class="legend-color" style="background: #ff4500;"></div>
+            <span>Current Route</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: rgba(255,255,255,0.3);"></div>
+            <span>Upcoming</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="background: #00ff88;"></div>
+            <span>Venue Location</span>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Tour data with coordinates
+        const tourData = [
+            // 2023 Leg 1 - North America
+            { date: "Oct 11, 2023", city: "Charlotte", country: "USA", venue: "Spectrum Center", lat: 35.2271, lng: -80.8431, region: "North America" },
+            { date: "Oct 14, 2023", city: "Atlanta", country: "USA", venue: "State Farm Arena", lat: 33.7573, lng: -84.3963, region: "North America" },
+            { date: "Oct 17, 2023", city: "Houston", country: "USA", venue: "Toyota Center", lat: 29.7508, lng: -95.3621, region: "North America" },
+            { date: "Oct 20, 2023", city: "Dallas", country: "USA", venue: "American Airlines Center", lat: 32.7905, lng: -96.8103, region: "North America" },
+            { date: "Oct 24, 2023", city: "Miami", country: "USA", venue: "Kaseya Center", lat: 25.7814, lng: -80.1870, region: "North America" },
+            { date: "Oct 28, 2023", city: "Tampa", country: "USA", venue: "Amalie Arena", lat: 27.9425, lng: -82.4519, region: "North America" },
+            { date: "Nov 4, 2023", city: "Phoenix", country: "USA", venue: "Footprint Center", lat: 33.4457, lng: -112.0712, region: "North America" },
+            { date: "Nov 8, 2023", city: "Las Vegas", country: "USA", venue: "T-Mobile Arena", lat: 36.1029, lng: -115.1783, region: "North America" },
+            { date: "Nov 11, 2023", city: "Los Angeles", country: "USA", venue: "Crypto.com Arena", lat: 34.0430, lng: -118.2673, region: "North America" },
+            { date: "Nov 14, 2023", city: "San Francisco", country: "USA", venue: "Chase Center", lat: 37.7680, lng: -122.3877, region: "North America" },
+            { date: "Nov 18, 2023", city: "Seattle", country: "USA", venue: "Climate Pledge Arena", lat: 47.6221, lng: -122.3540, region: "North America" },
+            { date: "Nov 21, 2023", city: "Portland", country: "USA", venue: "Moda Center", lat: 45.5316, lng: -122.6668, region: "North America" },
+            { date: "Nov 25, 2023", city: "Denver", country: "USA", venue: "Ball Arena", lat: 39.7487, lng: -105.0077, region: "North America" },
+            { date: "Dec 9, 2023", city: "Boston", country: "USA", venue: "TD Garden", lat: 42.3662, lng: -71.0621, region: "North America" },
+            { date: "Dec 12, 2023", city: "Philadelphia", country: "USA", venue: "Wells Fargo Center", lat: 39.9012, lng: -75.1720, region: "North America" },
+            { date: "Dec 14, 2023", city: "Washington DC", country: "USA", venue: "Capital One Arena", lat: 38.8981, lng: -77.0209, region: "North America" },
+            { date: "Dec 17, 2023", city: "Brooklyn", country: "USA", venue: "Barclays Center", lat: 40.6826, lng: -73.9754, region: "North America" },
+            { date: "Dec 23, 2023", city: "Toronto", country: "Canada", venue: "Scotiabank Arena", lat: 43.6435, lng: -79.3791, region: "North America" },
+            
+            // 2024 Leg 2 - More North America
+            { date: "Jan 3, 2024", city: "Chicago", country: "USA", venue: "United Center", lat: 41.8807, lng: -87.6742, region: "North America" },
+            { date: "Jan 6, 2024", city: "Detroit", country: "USA", venue: "Little Caesars Arena", lat: 42.3411, lng: -83.0553, region: "North America" },
+            { date: "Jan 9, 2024", city: "Cleveland", country: "USA", venue: "Rocket Mortgage FieldHouse", lat: 41.4965, lng: -81.6882, region: "North America" },
+            { date: "Jan 12, 2024", city: "Toronto", country: "Canada", venue: "Scotiabank Arena", lat: 43.6435, lng: -79.3791, region: "North America" },
+            { date: "Jan 16, 2024", city: "Montreal", country: "Canada", venue: "Bell Centre", lat: 45.4961, lng: -73.5693, region: "North America" },
+            { date: "Jan 20, 2024", city: "St. Paul", country: "USA", venue: "Xcel Energy Center", lat: 44.9448, lng: -93.1010, region: "North America" },
+            { date: "Jan 22, 2024", city: "Chicago", country: "USA", venue: "United Center", lat: 41.8807, lng: -87.6742, region: "North America" },
+            
+            // 2024 Leg 3 - Europe
+            { date: "Jun 15, 2024", city: "Manchester", country: "UK", venue: "Co-op Live", lat: 53.4831, lng: -2.2004, region: "Europe" },
+            { date: "Jun 18, 2024", city: "London", country: "UK", venue: "The O2", lat: 51.5033, lng: 0.0032, region: "Europe" },
+            { date: "Jun 22, 2024", city: "Paris", country: "France", venue: "Accor Arena", lat: 48.8385, lng: 2.3785, region: "Europe" },
+            { date: "Jun 25, 2024", city: "Amsterdam", country: "Netherlands", venue: "Ziggo Dome", lat: 52.3133, lng: 4.9370, region: "Europe" },
+            { date: "Jun 28, 2024", city: "Arnhem", country: "Netherlands", venue: "GelreDome", lat: 51.9633, lng: 5.8933, region: "Europe" },
+            { date: "Jul 1, 2024", city: "Berlin", country: "Germany", venue: "Mercedes-Benz Arena", lat: 52.5064, lng: 13.4439, region: "Europe" },
+            { date: "Jul 4, 2024", city: "Cologne", country: "Germany", venue: "Lanxess Arena", lat: 50.9378, lng: 6.8747, region: "Europe" },
+            { date: "Jul 7, 2024", city: "Frankfurt", country: "Germany", venue: "Festhalle Frankfurt", lat: 50.1117, lng: 8.6456, region: "Europe" },
+            { date: "Jul 10, 2024", city: "Milan", country: "Italy", venue: "Ippodromo SNAI", lat: 45.4758, lng: 9.0901, region: "Europe" },
+            { date: "Jul 13, 2024", city: "Barcelona", country: "Spain", venue: "Estadi Olímpic", lat: 41.3647, lng: 2.1557, region: "Europe" },
+            { date: "Jul 16, 2024", city: "Madrid", country: "Spain", venue: "IFEMA Madrid", lat: 40.4667, lng: -3.6211, region: "Europe" },
+            { date: "Jul 19, 2024", city: "Prague", country: "Czech Republic", venue: "O2 Arena Prague", lat: 50.1049, lng: 14.4935, region: "Europe" },
+            { date: "Jul 22, 2024", city: "Vienna", country: "Austria", venue: "Wiener Stadthalle", lat: 48.2020, lng: 16.3331, region: "Europe" },
+            { date: "Aug 23, 2024", city: "Leeds", country: "UK", venue: "Leeds Festival", lat: 53.8474, lng: -1.4991, region: "Europe" },
+            { date: "Aug 25, 2024", city: "Reading", country: "UK", venue: "Reading Festival", lat: 51.4551, lng: -0.9787, region: "Europe" },
+            
+            // 2024 Leg 4 - Latin America
+            { date: "Sep 7, 2024", city: "Santiago", country: "Chile", venue: "Estadio Nacional", lat: -33.4658, lng: -70.6107, region: "South America" },
+            { date: "Sep 10, 2024", city: "Buenos Aires", country: "Argentina", venue: "Estadio River Plate", lat: -34.5453, lng: -58.4498, region: "South America" },
+            { date: "Sep 14, 2024", city: "São Paulo", country: "Brazil", venue: "Rock in Rio", lat: -23.5505, lng: -46.6333, region: "South America" },
+            { date: "Sep 17, 2024", city: "Bogotá", country: "Colombia", venue: "Estadio El Campín", lat: 4.6473, lng: -74.0773, region: "South America" },
+            { date: "Sep 20, 2024", city: "Mexico City", country: "Mexico", venue: "Foro Sol", lat: 19.4040, lng: -99.0955, region: "North America" },
+            
+            // 2024 Leg 5 - Australia
+            { date: "Oct 18, 2024", city: "Melbourne", country: "Australia", venue: "Marvel Stadium", lat: -37.8165, lng: 144.9475, region: "Oceania" },
+            { date: "Oct 22, 2024", city: "Sydney", country: "Australia", venue: "Accor Stadium", lat: -33.8472, lng: 151.0633, region: "Oceania" },
+            { date: "Oct 25, 2024", city: "Brisbane", country: "Australia", venue: "Suncorp Stadium", lat: -27.4648, lng: 153.0095, region: "Oceania" },
+            { date: "Oct 29, 2024", city: "Auckland", country: "New Zealand", venue: "Eden Park", lat: -36.8749, lng: 174.7447, region: "Oceania" },
+            
+            // 2025 Coachella
+            { date: "Apr 12, 2025", city: "Indio", country: "USA", venue: "Coachella", lat: 33.6803, lng: -116.2378, region: "North America" },
+            { date: "Apr 19, 2025", city: "Indio", country: "USA", venue: "Coachella", lat: 33.6803, lng: -116.2378, region: "North America" },
+            
+            // 2025 Qatar
+            { date: "May 10, 2025", city: "Doha", country: "Qatar", venue: "Lusail Super Cup Stadium", lat: 25.4319, lng: 51.4906, region: "Asia" },
+            
+            // 2025 UK Festivals
+            { date: "Aug 22, 2025", city: "Leeds", country: "UK", venue: "Leeds Festival", lat: 53.8474, lng: -1.4991, region: "Europe" },
+            { date: "Aug 24, 2025", city: "Reading", country: "UK", venue: "Reading Festival", lat: 51.4551, lng: -0.9787, region: "Europe" },
+            
+            // 2025 Final Leg - Africa & Asia
+            { date: "Oct 11, 2025", city: "Johannesburg", country: "South Africa", venue: "FNB Stadium", lat: -26.2330, lng: 27.9831, region: "Africa" },
+            { date: "Oct 18, 2025", city: "Delhi", country: "India", venue: "Jawaharlal Nehru Stadium", lat: 28.5824, lng: 77.2323, region: "Asia" },
+            { date: "Oct 19, 2025", city: "Delhi", country: "India", venue: "Jawaharlal Nehru Stadium", lat: 28.5824, lng: 77.2323, region: "Asia" },
+            { date: "Oct 25, 2025", city: "Goyang (Seoul)", country: "South Korea", venue: "Goyang Stadium", lat: 37.7255, lng: 126.8884, region: "Asia" },
+            { date: "Nov 1, 2025", city: "Sanya", country: "China", venue: "Sanya Stadium", lat: 18.2524, lng: 109.5118, region: "Asia" },
+            { date: "Nov 8, 2025", city: "Tokorozawa (Tokyo)", country: "Japan", venue: "Belluna Dome", lat: 35.7673, lng: 139.4209, region: "Asia" },
+            { date: "Nov 19, 2025", city: "Mumbai", country: "India", venue: "Mahalaxmi Racecourse", lat: 18.9858, lng: 72.8173, region: "Asia" }
+        ];
+
+        // Region colors
+        const regionColors = {
+            "North America": 0xff4500,
+            "Europe": 0x00bfff,
+            "South America": 0x00ff88,
+            "Oceania": 0xffff00,
+            "Africa": 0xff00ff,
+            "Asia": 0xff8c00
+        };
+
+        let scene, camera, renderer, globe, controls;
+        let tourPoints = [];
+        let flightPaths = [];
+        let airplane;
+        let currentIndex = 0;
+        let isPlaying = false;
+        let autoRotate = true;
+        let animationProgress = 0;
+
+        function init() {
+            const container = document.getElementById('canvas-container');
+            
+            // Scene
+            scene = new THREE.Scene();
+            
+            // Camera
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 3.5;
+            
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            container.appendChild(renderer.domElement);
+            
+            // Earth
+            createEarth();
+            
+            // Tour points and paths
+            createTourVisualization();
+            
+            // Airplane
+            createAirplane();
+            
+            // Lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+            scene.add(ambientLight);
+            
+            const pointLight = new THREE.PointLight(0xffffff, 1);
+            pointLight.position.set(5, 3, 5);
+            scene.add(pointLight);
+            
+            // Timeline
+            createTimeline();
+            
+            // Events
+            window.addEventListener('resize', onWindowResize);
+            setupControls();
+            
+            // Mouse interaction
+            setupMouseControls();
+            
+            // Hide loading
+            setTimeout(() => {
+                document.getElementById('loading').classList.add('hidden');
+            }, 1500);
+            
+            animate();
+        }
+
+        function createEarth() {
+            const geometry = new THREE.SphereGeometry(1, 64, 64);
+            
+            // Create gradient texture for earth with continents
+            const canvas = document.createElement('canvas');
+            canvas.width = 2048;
+            canvas.height = 1024;
+            const ctx = canvas.getContext('2d');
+            
+            // Dark earth background
+            ctx.fillStyle = '#050508';
+            ctx.fillRect(0, 0, 2048, 1024);
+            
+            // Add grid lines
+            ctx.strokeStyle = 'rgba(255, 69, 0, 0.08)';
+            ctx.lineWidth = 0.5;
+            
+            // Latitude lines
+            for (let i = 0; i <= 18; i++) {
+                ctx.beginPath();
+                ctx.moveTo(0, i * 1024/18);
+                ctx.lineTo(2048, i * 1024/18);
+                ctx.stroke();
+            }
+            
+            // Longitude lines
+            for (let i = 0; i <= 36; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i * 2048/36, 0);
+                ctx.lineTo(i * 2048/36, 1024);
+                ctx.stroke();
+            }
+            
+            // Draw continents
+            drawContinents(ctx);
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            
+            const material = new THREE.MeshPhongMaterial({
+                map: texture,
+                transparent: true,
+                opacity: 0.95,
+                shininess: 5
+            });
+            
+            globe = new THREE.Mesh(geometry, material);
+            scene.add(globe);
+            
+            // Atmosphere glow
+            const atmosphereGeometry = new THREE.SphereGeometry(1.05, 64, 64);
+            const atmosphereMaterial = new THREE.MeshBasicMaterial({
+                color: 0xff4500,
+                transparent: true,
+                opacity: 0.1,
+                side: THREE.BackSide
+            });
+            const atmosphere = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial);
+            scene.add(atmosphere);
+        }
+        
+        function drawContinents(ctx) {
+            // Convert lat/lng to canvas coordinates
+            function toCanvas(lat, lng) {
+                const x = (lng + 180) * (2048 / 360);
+                const y = (90 - lat) * (1024 / 180);
+                return [x, y];
+            }
+            
+            // Draw a continent shape
+            function drawShape(points, fillColor, strokeColor) {
+                ctx.beginPath();
+                const [startX, startY] = toCanvas(points[0][0], points[0][1]);
+                ctx.moveTo(startX, startY);
+                for (let i = 1; i < points.length; i++) {
+                    const [x, y] = toCanvas(points[i][0], points[i][1]);
+                    ctx.lineTo(x, y);
+                }
+                ctx.closePath();
+                ctx.fillStyle = fillColor;
+                ctx.fill();
+                ctx.strokeStyle = strokeColor;
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+            }
+            
+            const landFill = 'rgba(255, 69, 0, 0.15)';
+            const landStroke = 'rgba(255, 69, 0, 0.4)';
+            
+            // North America (simplified)
+            drawShape([
+                [70, -170], [70, -140], [65, -140], [60, -135], [55, -130],
+                [50, -125], [45, -125], [40, -125], [35, -120], [30, -115],
+                [25, -110], [20, -105], [15, -95], [18, -90], [20, -88],
+                [25, -82], [30, -82], [25, -80], [27, -78], [30, -85],
+                [35, -75], [40, -74], [45, -67], [50, -60], [55, -60],
+                [60, -65], [65, -75], [70, -80], [75, -85], [80, -90],
+                [83, -100], [80, -120], [75, -140], [70, -160]
+            ], landFill, landStroke);
+            
+            // South America
+            drawShape([
+                [12, -75], [10, -72], [5, -77], [0, -80], [-5, -80],
+                [-10, -78], [-15, -75], [-20, -70], [-25, -65], [-30, -60],
+                [-35, -58], [-40, -62], [-45, -65], [-50, -70], [-55, -68],
+                [-55, -65], [-52, -58], [-45, -58], [-40, -57], [-35, -55],
+                [-30, -48], [-25, -46], [-20, -40], [-15, -38], [-10, -35],
+                [-5, -35], [0, -50], [5, -60], [10, -65], [12, -72]
+            ], landFill, landStroke);
+            
+            // Europe
+            drawShape([
+                [70, -10], [70, 30], [65, 30], [60, 30], [55, 25],
+                [50, 25], [45, 25], [40, 25], [38, 20], [36, 15],
+                [37, 5], [40, 0], [43, -5], [45, -10], [48, -5],
+                [50, -5], [52, 5], [55, 10], [58, 10], [60, 5],
+                [62, 0], [65, -5], [68, -5]
+            ], landFill, landStroke);
+            
+            // Africa
+            drawShape([
+                [37, -5], [35, 10], [30, 32], [25, 35], [20, 38],
+                [15, 42], [10, 42], [5, 40], [0, 42], [-5, 40],
+                [-10, 40], [-15, 38], [-20, 35], [-25, 30], [-30, 28],
+                [-35, 20], [-35, 18], [-30, 17], [-25, 15], [-20, 12],
+                [-15, 12], [-10, 15], [-5, 10], [0, 8], [5, 5],
+                [10, 0], [15, -10], [20, -15], [25, -15], [30, -10],
+                [35, 0]
+            ], landFill, landStroke);
+            
+            // Asia (main)
+            drawShape([
+                [70, 30], [75, 50], [75, 80], [70, 100], [65, 120],
+                [60, 140], [55, 140], [50, 140], [45, 145], [40, 140],
+                [35, 138], [35, 130], [30, 120], [25, 120], [20, 110],
+                [15, 100], [10, 100], [8, 95], [10, 90], [15, 80],
+                [20, 75], [25, 70], [30, 70], [35, 60], [40, 50],
+                [45, 45], [50, 40], [55, 40], [60, 35], [65, 30]
+            ], landFill, landStroke);
+            
+            // India
+            drawShape([
+                [35, 70], [30, 72], [25, 73], [20, 75], [15, 77],
+                [10, 78], [8, 77], [10, 73], [15, 70], [20, 72],
+                [25, 70], [30, 68], [33, 68]
+            ], landFill, landStroke);
+            
+            // Southeast Asia
+            drawShape([
+                [20, 100], [15, 102], [10, 105], [5, 105], [2, 103],
+                [0, 100], [-5, 105], [-8, 110], [-8, 115], [-5, 120],
+                [0, 118], [5, 115], [10, 110], [15, 108], [18, 105]
+            ], landFill, landStroke);
+            
+            // Japan
+            drawShape([
+                [45, 140], [42, 142], [38, 140], [35, 138], [33, 135],
+                [35, 132], [38, 133], [42, 138], [44, 141]
+            ], landFill, landStroke);
+            
+            // Australia
+            drawShape([
+                [-12, 130], [-15, 125], [-20, 118], [-25, 115], [-30, 115],
+                [-35, 117], [-38, 145], [-35, 150], [-30, 153], [-25, 153],
+                [-20, 148], [-15, 145], [-12, 140], [-10, 135]
+            ], landFill, landStroke);
+            
+            // New Zealand
+            drawShape([
+                [-35, 173], [-38, 175], [-42, 175], [-46, 168], [-45, 167],
+                [-42, 168], [-38, 170], [-36, 172]
+            ], landFill, landStroke);
+            
+            // UK & Ireland
+            drawShape([
+                [58, -6], [55, -5], [52, -5], [50, 0], [51, 2],
+                [53, 0], [55, -2], [57, -3], [59, -3]
+            ], landFill, landStroke);
+            
+            // Greenland
+            drawShape([
+                [83, -35], [80, -20], [75, -18], [70, -22], [65, -40],
+                [68, -52], [72, -55], [78, -50], [82, -40]
+            ], landFill, landStroke);
+        }
+
+        function latLngToVector3(lat, lng, radius = 1.02) {
+            const phi = (90 - lat) * (Math.PI / 180);
+            const theta = (lng + 180) * (Math.PI / 180);
+            
+            const x = -radius * Math.sin(phi) * Math.cos(theta);
+            const y = radius * Math.cos(phi);
+            const z = radius * Math.sin(phi) * Math.sin(theta);
+            
+            return new THREE.Vector3(x, y, z);
+        }
+
+        function createTourVisualization() {
+            // Create points for each venue
+            tourData.forEach((venue, index) => {
+                const position = latLngToVector3(venue.lat, venue.lng);
+                
+                // Point marker
+                const pointGeometry = new THREE.SphereGeometry(0.015, 16, 16);
+                const pointMaterial = new THREE.MeshBasicMaterial({
+                    color: regionColors[venue.region] || 0x00ff88,
+                    transparent: true,
+                    opacity: 0.8
+                });
+                const point = new THREE.Mesh(pointGeometry, pointMaterial);
+                point.position.copy(position);
+                point.userData = { index, venue };
+                globe.add(point);  // Add to globe instead of scene
+                tourPoints.push(point);
+                
+                // Pulse ring
+                const ringGeometry = new THREE.RingGeometry(0.02, 0.025, 32);
+                const ringMaterial = new THREE.MeshBasicMaterial({
+                    color: regionColors[venue.region] || 0x00ff88,
+                    transparent: true,
+                    opacity: 0,
+                    side: THREE.DoubleSide
+                });
+                const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+                ring.position.copy(position);
+                ring.lookAt(new THREE.Vector3(0, 0, 0));
+                ring.userData = { originalScale: 1 };
+                globe.add(ring);  // Add to globe instead of scene
+                point.userData.ring = ring;
+            });
+            
+            // Create flight paths
+            for (let i = 0; i < tourData.length - 1; i++) {
+                const start = latLngToVector3(tourData[i].lat, tourData[i].lng);
+                const end = latLngToVector3(tourData[i + 1].lat, tourData[i + 1].lng);
+                
+                const curve = createArcCurve(start, end);
+                const points = curve.getPoints(50);
+                const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                
+                const material = new THREE.LineBasicMaterial({
+                    color: 0xffffff,
+                    transparent: true,
+                    opacity: 0.1
+                });
+                
+                const line = new THREE.Line(geometry, material);
+                line.userData = { index: i, curve };
+                globe.add(line);  // Add to globe instead of scene
+                flightPaths.push(line);
+            }
+        }
+
+        function createArcCurve(start, end) {
+            const distance = start.distanceTo(end);
+            const mid = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
+            mid.normalize().multiplyScalar(1 + distance * 0.2);
+            
+            return new THREE.QuadraticBezierCurve3(start, mid, end);
+        }
+
+        function createAirplane() {
+            const group = new THREE.Group();
+            
+            // Fuselage - larger and more visible
+            const bodyGeometry = new THREE.ConeGeometry(0.015, 0.06, 8);
+            const bodyMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+            body.rotation.x = -Math.PI / 2;
+            group.add(body);
+            
+            // Wings - larger
+            const wingGeometry = new THREE.BoxGeometry(0.06, 0.003, 0.015);
+            const wing = new THREE.Mesh(wingGeometry, bodyMaterial);
+            wing.position.z = 0.01;
+            group.add(wing);
+            
+            // Glow effect behind airplane
+            const glowGeometry = new THREE.SphereGeometry(0.025, 16, 16);
+            const glowMaterial = new THREE.MeshBasicMaterial({
+                color: 0xff4500,
+                transparent: true,
+                opacity: 0.6
+            });
+            const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+            group.add(glow);
+            
+            airplane = group;
+            airplane.visible = false;
+            globe.add(airplane);  // Add to globe instead of scene
+            
+            // Create separate trail line
+            const trailGeometry = new THREE.BufferGeometry();
+            const trailMaterial = new THREE.LineBasicMaterial({
+                color: 0xff4500,
+                transparent: true,
+                opacity: 0.8,
+                linewidth: 2
+            });
+            airplaneTrail = new THREE.Line(trailGeometry, trailMaterial);
+            globe.add(airplaneTrail);  // Add to globe instead of scene
+            trailPositions = [];
+        }
+        
+        let airplaneTrail;
+        let trailPositions = [];
+
+        function createTimeline() {
+            const timeline = document.getElementById('timeline');
+            tourData.forEach((venue, index) => {
+                const dot = document.createElement('div');
+                dot.className = 'timeline-dot';
+                dot.title = `${venue.city}, ${venue.country}`;
+                dot.addEventListener('click', () => jumpToVenue(index));
+                timeline.appendChild(dot);
+            });
+        }
+
+        function updateTimeline() {
+            const dots = document.querySelectorAll('.timeline-dot');
+            dots.forEach((dot, index) => {
+                dot.classList.remove('active', 'visited');
+                if (index < currentIndex) {
+                    dot.classList.add('visited');
+                } else if (index === currentIndex) {
+                    dot.classList.add('active');
+                }
+            });
+        }
+
+        function jumpToVenue(index) {
+            currentIndex = index;
+            animationProgress = 0;
+            
+            // Clear trail
+            trailPositions = [];
+            if (airplaneTrail && airplaneTrail.geometry) {
+                airplaneTrail.geometry.dispose();
+                airplaneTrail.geometry = new THREE.BufferGeometry();
+            }
+            
+            updateTimeline();
+            showVenueInfo(tourData[index]);
+            
+            // Rotate globe to venue
+            const venue = tourData[index];
+            const targetRotation = -((venue.lng + 90) * Math.PI / 180);
+            globe.rotation.y = targetRotation;
+            
+            // Highlight current path
+            flightPaths.forEach((path, i) => {
+                path.material.opacity = i < index ? 0.5 : 0.1;
+                path.material.color.setHex(i < index ? 0xff4500 : 0xffffff);
+            });
+            
+            // Highlight points
+            tourPoints.forEach((point, i) => {
+                point.scale.setScalar(i <= index ? 1.5 : 1);
+            });
+        }
+
+        function showVenueInfo(venue) {
+            const infoEl = document.getElementById('venue-info');
+            const cityEl = document.getElementById('venue-city');
+            const detailsEl = document.getElementById('venue-details');
+            
+            cityEl.textContent = `${venue.city}, ${venue.country}`;
+            detailsEl.innerHTML = `
+                <div class="venue-date">${venue.date}</div>
+                <div>${venue.venue}</div>
+                <div style="margin-top: 5px; color: ${getRegionColorHex(venue.region)};">${venue.region}</div>
+            `;
+            
+            infoEl.classList.add('active');
+        }
+
+        function getRegionColorHex(region) {
+            const colors = {
+                "North America": "#ff4500",
+                "Europe": "#00bfff",
+                "South America": "#00ff88",
+                "Oceania": "#ffff00",
+                "Africa": "#ff00ff",
+                "Asia": "#ff8c00"
+            };
+            return colors[region] || "#00ff88";
+        }
+
+        function setupControls() {
+            document.getElementById('play-btn').addEventListener('click', () => {
+                isPlaying = !isPlaying;
+                document.getElementById('play-btn').textContent = isPlaying ? '⏸' : '▶';
+                document.getElementById('play-btn').classList.toggle('active', isPlaying);
+                
+                // Disable auto-rotate when playing
+                if (isPlaying) {
+                    autoRotate = false;
+                    document.getElementById('auto-rotate').classList.remove('active');
+                }
+            });
+            
+            document.getElementById('reset-btn').addEventListener('click', () => {
+                currentIndex = 0;
+                animationProgress = 0;
+                isPlaying = false;
+                trailPositions = [];
+                if (airplaneTrail && airplaneTrail.geometry) {
+                    airplaneTrail.geometry.dispose();
+                    airplaneTrail.geometry = new THREE.BufferGeometry();
+                }
+                airplane.visible = false;
+                document.getElementById('play-btn').textContent = '▶';
+                document.getElementById('play-btn').classList.remove('active');
+                
+                // Reset all paths
+                flightPaths.forEach(path => {
+                    path.material.opacity = 0.1;
+                    path.material.color.setHex(0xffffff);
+                });
+                
+                // Reset all points
+                tourPoints.forEach(point => {
+                    point.scale.setScalar(1);
+                });
+                
+                updateTimeline();
+                jumpToVenue(0);
+            });
+            
+            document.getElementById('auto-rotate').addEventListener('click', function() {
+                autoRotate = !autoRotate;
+                this.classList.toggle('active', autoRotate);
+            });
+        }
+
+        function setupMouseControls() {
+            let isDragging = false;
+            let previousMousePosition = { x: 0, y: 0 };
+            
+            renderer.domElement.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                autoRotate = false;
+                document.getElementById('auto-rotate').classList.remove('active');
+            });
+            
+            renderer.domElement.addEventListener('mousemove', (e) => {
+                if (isDragging) {
+                    const deltaX = e.clientX - previousMousePosition.x;
+                    const deltaY = e.clientY - previousMousePosition.y;
+                    
+                    globe.rotation.y += deltaX * 0.005;
+                    globe.rotation.x += deltaY * 0.005;
+                    globe.rotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, globe.rotation.x));
+                }
+                previousMousePosition = { x: e.clientX, y: e.clientY };
+            });
+            
+            renderer.domElement.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+            
+            renderer.domElement.addEventListener('wheel', (e) => {
+                camera.position.z += e.deltaY * 0.001;
+                camera.position.z = Math.max(2, Math.min(6, camera.position.z));
+            });
+            
+            // Raycaster for point hover
+            const raycaster = new THREE.Raycaster();
+            const mouse = new THREE.Vector2();
+            
+            renderer.domElement.addEventListener('mousemove', (e) => {
+                mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+                
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObjects(tourPoints);
+                
+                if (intersects.length > 0) {
+                    const venue = intersects[0].object.userData.venue;
+                    showVenueInfo(venue);
+                    document.body.style.cursor = 'pointer';
+                } else if (!isDragging) {
+                    document.body.style.cursor = 'default';
+                }
+            });
+        }
+
+        function updateAirplane() {
+            if (!isPlaying || currentIndex >= tourData.length - 1) {
+                return;
+            }
+            
+            animationProgress += 0.035;
+            
+            if (animationProgress >= 1) {
+                animationProgress = 0;
+                currentIndex++;
+                updateTimeline();
+                
+                // Clear trail when moving to next path
+                trailPositions = [];
+                
+                if (currentIndex < tourData.length) {
+                    showVenueInfo(tourData[currentIndex]);
+                    
+                    // Update path colors
+                    if (currentIndex > 0) {
+                        flightPaths[currentIndex - 1].material.opacity = 0.5;
+                        flightPaths[currentIndex - 1].material.color.setHex(0xff4500);
+                    }
+                }
+                
+                if (currentIndex >= tourData.length - 1) {
+                    isPlaying = false;
+                    airplane.visible = false;
+                    document.getElementById('play-btn').textContent = '▶';
+                    document.getElementById('play-btn').classList.remove('active');
+                    return;
+                }
+            }
+            
+            const curve = flightPaths[currentIndex].userData.curve;
+            const position = curve.getPoint(animationProgress);
+            const nextPosition = curve.getPoint(Math.min(animationProgress + 0.05, 1));
+            
+            airplane.position.copy(position);
+            airplane.visible = true;
+            
+            // Make airplane look in the direction of travel
+            airplane.lookAt(nextPosition);
+            
+            // Smoothly rotate globe to keep airplane in view
+            // Get the current venue's longitude and interpolate to next
+            const currentVenue = tourData[currentIndex];
+            const nextVenue = tourData[currentIndex + 1];
+            const interpolatedLng = currentVenue.lng + (nextVenue.lng - currentVenue.lng) * animationProgress;
+            
+            // Calculate target rotation (globe needs to rotate so airplane faces camera)
+            const targetRotationY = -((interpolatedLng + 90) * Math.PI / 180);
+            
+            // Smoothly interpolate globe rotation
+            globe.rotation.y += (targetRotationY - globe.rotation.y) * 0.03;
+            
+            // Update trail
+            trailPositions.push(position.clone());
+            if (trailPositions.length > 30) {
+                trailPositions.shift();
+            }
+            
+            // Update trail geometry
+            if (trailPositions.length >= 2) {
+                const trailGeometry = new THREE.BufferGeometry().setFromPoints(trailPositions);
+                airplaneTrail.geometry.dispose();
+                airplaneTrail.geometry = trailGeometry;
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Auto rotate only when not playing
+            if (autoRotate && !isPlaying) {
+                globe.rotation.y += 0.001;
+            }
+            
+            // Update airplane and rotate globe to follow
+            updateAirplane();
+            
+            // Animate points
+            const time = Date.now() * 0.001;
+            tourPoints.forEach((point, index) => {
+                if (point.userData.ring) {
+                    const ring = point.userData.ring;
+                    const scale = 1 + Math.sin(time * 2 + index * 0.5) * 0.2;
+                    ring.scale.setScalar(scale);
+                    ring.material.opacity = 0.3 - (scale - 1) * 0.5;
+                }
+            });
+            
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // Start
+        init();
+        
+        // Show first venue
+        setTimeout(() => {
+            jumpToVenue(0);
+        }, 2000);
+    </script>
+</body>
+</html>
